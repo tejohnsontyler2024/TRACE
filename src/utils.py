@@ -20,11 +20,11 @@ def get_path(config_file_name):
     
     return config_path
 
-def decode_binary(binary_file, waveform_length):
+def decode_binary(binary_file, name_tag, waveform_length):
     
     config_path = get_path(binary_file)
     
-    output_file_name = config_path + 'decoded_waveforms.npy'
+    output_file_name = config_path + 'decoded_waveforms_'+name_tag+'.npy'
     
     waveform_length = int(waveform_length)
     
@@ -41,7 +41,7 @@ def decode_binary(binary_file, waveform_length):
         index_start = int(i*waveform_length)
         index_end = int((i+1)*waveform_length)
         
-        waveforms[i] = -1*data[index_start:index_end]
+        waveforms[i] = data[index_start:index_end]
     
     # save the waveforms as a numpy file
     

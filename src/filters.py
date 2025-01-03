@@ -1,6 +1,18 @@
-
+# filters.py
 import numpy as np 
 from scipy.signal import savgol_filter
+
+def mean_absolute_deviation(data, baseline_guess):
+    # Calculate the mean (average) of the data
+    #mean = sum(data) / len(data)
+    
+    # Calculate the absolute deviations from the mean and store them in a list
+    absolute_deviations = [abs(x - baseline_guess) for x in data]
+    
+    # Calculate the MAD by taking the average of the absolute deviations
+    mad = sum(absolute_deviations) / len(data)
+    
+    return mad
 
 def getCMAFilter( waveform, preloadValue, halfWidth, rejectThreshold ):
 		#Initialize our filter.

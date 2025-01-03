@@ -3,6 +3,7 @@ import sys
 
 # from src.utils import *
 from src.utils import read_config_file, decode_binary
+from src.toy_waveforms import make_toy_waveforms
 
 def main():
 	
@@ -30,8 +31,11 @@ def main():
  
 	config = read_config_file(config_file)
  
-	data_file_name = config['DATA_FILE']
+	path_to_trace = config['PATH_TO_TRACE']
+ 
+	data_file_name = path_to_trace+'/data/'+config['DATA_FILE']
 	waveform_length = config['WAVEFORM_LENGTH']
+	name_tag = config['NAME_TAG']
 	processes = config['PROCESSES']
  
 	binary_parser_bool = processes['BINARY_PARSER']
@@ -44,8 +48,7 @@ def main():
 	# Rather than keep in memory, it will be saved as a numpy file.
  
 	if binary_parser_bool:
-		output_file_name = decode_binary(data_file_name, waveform_length)
-  
+		output_file_name = decode_binary(data_file_name, name_tag, waveform_length)
   
   
 	# now we will make a toy waveform if the user wants to.
@@ -58,9 +61,9 @@ def main():
   
 		num_noise_waveforms = toy_waveform_params['NUM_NOISE_WAVEFORMS']
 		num_signal_waveforms = toy_waveform_params['NUM_SIGNAL_WAVEFORMS']
+		level_threshold_sigma = toy_waveform_params['LEVEL_THRESHOLD_SIGMA']
   
-  
-		# make_toy_waveform()
+		make_toy_waveforms(path_to_trace, output_file_name, level_threshold_sigma, num_signal_waveforms, num_noise_waveforms, name_tag)
 	
 if __name__ == "__main__":
 	main()
