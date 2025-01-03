@@ -1,1 +1,13 @@
-i
+{
+    "DATA_FILE": "/Users/tylerjohnson/Documents/Yale/RAY/TRACE/data/wave0.dat",
+    "WAVEFORM_LENGTH": 1024,
+    "PROCESSES": {
+        "BINARY_PARSER": true,
+        "MAKE_TOY_WAVEFORMS": true,
+        "DSP_OPTIMIZATION": true
+    },
+    "TOY_WAVEFORM_PARAMS": {
+        "NUM_NOISE_WAVEFORMS": 1000,
+        "NUM_SIGNAL_WAVEFORMS": 1000
+    }
+}
