@@ -3,9 +3,22 @@ import numpy as np
 import statistics
 import os
 import matplotlib.pyplot as plt
-from .filters import mean_absolute_deviation, getCMAFilter, level_threshold_bool
+from .filters import mean_absolute_deviation, getCMAFilter, level_threshold_bool, check_clipping_from_sample
 
-def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_waveforms, path_to_trace, name_tag):
+def get_waveform_snippet(wf, onset_sample, pre_onset_samples, post_onset_samples):
+    
+    waveform_snippet = wf[onset_sample-pre_onset_samples:onset_sample+post_onset_samples]
+    
+    return waveform_snippet
+
+def harvest_noise(waveforms, path_to_trace, name_tag, toy_waveform_params):
+    
+    num_noise_waveforms = toy_waveform_params['NUM_NOISE_WAVEFORMS']
+    num_signal_waveforms = toy_waveform_params['NUM_SIGNAL_WAVEFORMS']
+    level_threshold_sigma = toy_waveform_params['LEVEL_THRESHOLD_SIGMA']
+
+    pre_onset_samples = toy_waveform_params['PRE_ONSET_SAMPLES']
+    post_onset_samples = toy_waveform_params['POST_ONSET_SAMPLES']
     
     noise_waveforms, signal_waveforms = [], []
         
@@ -21,7 +34,7 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
         
         mad_i = mean_absolute_deviation(wf_np_i, mode_i)
         
-        threshold_i = level_threshold * mad_i # recall that electron signals are negative polarity
+        threshold_i = level_threshold_sigma * mad_i # recall that electron signals are negative polarity
         
         
         # baseline subtracted waveform
@@ -36,7 +49,7 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
 
         # get indices about the threshold
         
-        hit_bool = level_threshold(wf_baseline_subtracted_i, threshold_i)
+        hit_bool, first_hit_sample = level_threshold_bool(wf_baseline_subtracted_i, threshold_i)
         
         
         if not hit_bool:
@@ -44,8 +57,18 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
             noise_waveforms.append(wf_i)
             
         else:
+                        
+            clipping_bool = check_clipping_from_sample(first_hit_sample, len(wf_i), pre_onset_samples, post_onset_samples)
             
-            signal_waveforms.append(wf_i) 
+            # if there's NO clipping (clipping_bool == False) then we can consider this a signal waveform
+            
+            if not clipping_bool:
+                
+                # get the waveform snippet
+                
+                waveform_snippet = get_waveform_snippet(wf_baseline_subtracted_i, first_hit_sample, pre_onset_samples, post_onset_samples)
+            
+                signal_waveforms.append(waveform_snippet) 
         
         
         num_noise_waveforms_found = len(noise_waveforms)
@@ -58,9 +81,17 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
         
     # save the noise waveforms as a numpy file
     
-    noise_waveform_file_name = path_to_trace + '/toy_waveforms/noise/noise_waveforms_'+name_tag+'.npy'
+    noise_waveform_file_name = path_to_trace + '/toy_waveforms/noise/noise_waveforms_'+name_tag+'.npy'    
     
-    signal_waveform_file_name = path_to_trace + '/toy_waveforms/signals/signal_waveforms_'+name_tag+'.npy'
+    # make the signal template
+    
+    
+    signal_waveforms = np.array(signal_waveforms)
+    
+    signal_template = np.mean(signal_waveforms, axis=0)
+    
+    signal_template_file_name = path_to_trace + '/toy_waveforms/noise/signal_template_'+name_tag+'.npy'
+    
     
     # TODO check if the file already exists and ask the user if they want to overwrite it
     
@@ -76,7 +107,7 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
             
             np.save(noise_waveform_file_name, noise_waveforms)
             
-            np.save(signal_waveform_file_name, signal_waveforms)
+            np.save(signal_template_file_name, signal_template)
             
         else:
             
@@ -88,17 +119,18 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
     
         np.save(noise_waveform_file_name, noise_waveforms)
         
-        np.save(signal_waveform_file_name, signal_waveforms)
+        np.save(signal_template_file_name, signal_template)
 
-def make_toy_waveforms(path_to_trace, waveform_file_name, level_threshold, num_signal_waveforms, num_noise_waveforms, name_tag):
+def make_toy_waveforms(path_to_trace, waveform_file_name, name_tag, toy_waveform_params):
     
     # open the output_file_name.npy file
     waveforms = np.load(waveform_file_name)
     
     
-    # harvest the noise waveforms
-    harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_waveforms, path_to_trace, name_tag)
+    # harvest the noise waveforms and make signal template
+    harvest_noise(waveforms,  path_to_trace, name_tag, toy_waveform_params)
         
-        
+    
+    # make the signal waveforms
         
         

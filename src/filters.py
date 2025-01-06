@@ -178,11 +178,27 @@ def getPulsesFromFIR( waveform, baseline, windowSize, gapSize, firThresh, fracti
             
     return pulseTimes
 
+def check_clipping_from_sample(sample_i, length_of_wf, pre_onset_samples, post_onset_samples):
+    
+    # it's kind of backwards sounding but it IS clipping if TRUE is returned
+        
+    min_sample = pre_onset_samples 
+    
+    max_sample = length_of_wf - post_onset_samples
+    
+    if sample_i < min_sample or sample_i > max_sample:
+        
+        return True
+    
+    else:
+        
+        return False
+
 def level_threshold_bool(waveform, threshold):
     
     # IMPORTANT NOTE: The waveform must be baseline subtracted before using this function
     
-    # the purpose of this function is simply to determine IF the waveform contains any samples above the threshold
+    # the purpose of this function is simply to determine IF the waveform contains any samples above the threshold and what the first index is
     # a truer level threshold function will likely require the usage of a hold off time/sample to counter multi counting of the same pulse
     
     # check if the waveform is a numpy array or list
@@ -199,8 +215,8 @@ def level_threshold_bool(waveform, threshold):
     
     if num_indices == 0:
         
-        return False
+        return False, None
     
     else:
             
-        return True
+        return True, indices[0]

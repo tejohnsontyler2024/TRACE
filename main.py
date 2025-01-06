@@ -82,11 +82,15 @@ def main():
   
 		toy_waveform_params = config['TOY_WAVEFORM_PARAMS']
   
-		num_noise_waveforms = toy_waveform_params['NUM_NOISE_WAVEFORMS']
-		num_signal_waveforms = toy_waveform_params['NUM_SIGNAL_WAVEFORMS']
-		level_threshold_sigma = toy_waveform_params['LEVEL_THRESHOLD_SIGMA']
+		# num_noise_waveforms = toy_waveform_params['NUM_NOISE_WAVEFORMS']
+		# num_signal_waveforms = toy_waveform_params['NUM_SIGNAL_WAVEFORMS']
+		# level_threshold_sigma = toy_waveform_params['LEVEL_THRESHOLD_SIGMA']
   
-		make_toy_waveforms(path_to_trace, output_file_name, level_threshold_sigma, num_signal_waveforms, num_noise_waveforms, name_tag)
+		# pre_onset_samples = toy_waveform_params['PRE_ONSET_SAMPLES']
+		# post_onset_samples = toy_waveform_params['POST_ONSET_SAMPLES']
+  
+		make_toy_waveforms(path_to_trace, output_file_name, name_tag,
+                     toy_waveform_params)
 	
 if __name__ == "__main__":
 	main()
