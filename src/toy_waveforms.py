@@ -3,19 +3,17 @@ import numpy as np
 import statistics
 import os
 import matplotlib.pyplot as plt
-from .filters import mean_absolute_deviation, getCMAFilter
+from .filters import mean_absolute_deviation, getCMAFilter, level_threshold_bool
 
 def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_waveforms, path_to_trace, name_tag):
     
-    noise_waveforms = []
-    
-    signal_waveforms = []
-    
+    noise_waveforms, signal_waveforms = [], []
+        
     # I need to comb through the raw waveforms to harvest noise traces
     
     for wf_i in waveforms:
         
-        wf_np_i = np.array(wf_i)
+        wf_np_i = np.array(wf_i) # convert the waveform to a numpy array for easier manipulation. Could cause speed bottle neck for larger files.
     
         # step 1: get the baseline estimate and the MAD
         
@@ -38,15 +36,10 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
 
         # get indices about the threshold
         
-        indices = np.where(wf_baseline_subtracted_i > threshold_i)[0]
+        hit_bool = level_threshold(wf_baseline_subtracted_i, threshold_i)
         
         
-        # number of indices above threshold
-        
-        num_indices = len(indices)
-        
-        
-        if (num_indices == 0):
+        if not hit_bool:
             
             noise_waveforms.append(wf_i)
             
@@ -100,12 +93,10 @@ def harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_wa
 def make_toy_waveforms(path_to_trace, waveform_file_name, level_threshold, num_signal_waveforms, num_noise_waveforms, name_tag):
     
     # open the output_file_name.npy file
-    
     waveforms = np.load(waveform_file_name)
     
     
     # harvest the noise waveforms
-    
     harvest_noise(waveforms, level_threshold, num_signal_waveforms, num_noise_waveforms, path_to_trace, name_tag)
         
         

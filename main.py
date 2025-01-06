@@ -1,8 +1,9 @@
 import numpy as np
 import sys 
+import os 
 
 # from src.utils import *
-from src.utils import read_config_file, decode_binary
+from src.utils import read_config_file, decode_binary, get_path
 from src.toy_waveforms import make_toy_waveforms
 
 def main():
@@ -47,14 +48,36 @@ def main():
 	# now we will decode the binary file. 
 	# Rather than keep in memory, it will be saved as a numpy file.
  
+	config_path = get_path(data_file_name)
+    
+	output_file_name = config_path + 'decoded_waveforms_'+name_tag+'.npy'
+ 
+	# does the output file exist?
+	file_exist = os.path.exists(output_file_name)
+ 
 	if binary_parser_bool:
-		output_file_name = decode_binary(data_file_name, name_tag, waveform_length)
+     
+		if file_exist:
+      
+			print("The file: ", output_file_name, " already exists. Should I overwrite it?")
+			input_string = input("y/n: ")
+   
+			if input_string.lower() == 'y':
+				_ = decode_binary(
+					data_file_name, output_file_name, waveform_length
+				)
+
+	else:
+		print("Binary parser is turned off.")
   
+		if not file_exist:
+			
+			print("The file: ", output_file_name, " does not exist. \nExiting.")
+			sys.exit(1)
   
 	# now we will make a toy waveform if the user wants to.
 	if make_toy_waveform_bool:
 		print("Making toy waveforms")
-  
 		# get the toy waveform parameters from the config file
   
 		toy_waveform_params = config['TOY_WAVEFORM_PARAMS']

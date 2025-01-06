@@ -177,3 +177,30 @@ def getPulsesFromFIR( waveform, baseline, windowSize, gapSize, firThresh, fracti
             j += 1
             
     return pulseTimes
+
+def level_threshold_bool(waveform, threshold):
+    
+    # IMPORTANT NOTE: The waveform must be baseline subtracted before using this function
+    
+    # the purpose of this function is simply to determine IF the waveform contains any samples above the threshold
+    # a truer level threshold function will likely require the usage of a hold off time/sample to counter multi counting of the same pulse
+    
+    # check if the waveform is a numpy array or list
+    
+    if type(waveform) == list:
+        waveform = np.array(waveform)
+    
+    indices = np.where(waveform > threshold)[0]
+    
+        
+    # number of indices above threshold
+    
+    num_indices = len(indices)
+    
+    if num_indices == 0:
+        
+        return False
+    
+    else:
+            
+        return True

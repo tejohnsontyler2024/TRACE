@@ -6,7 +6,8 @@
     "PROCESSES": {
         "BINARY_PARSER": true,
         "MAKE_TOY_WAVEFORMS": true,
-        "DSP_OPTIMIZATION": true
+        "DSP_OPTIMIZATION": true,
+        "RUN_DSP": true
     },
     "TOY_WAVEFORM_PARAMS": {
         "NUM_NOISE_WAVEFORMS": 1000,
