@@ -2,15 +2,23 @@
 import numpy as np 
 from scipy.signal import savgol_filter
 
-def mean_absolute_deviation(data, baseline_guess):
-    # Calculate the mean (average) of the data
-    #mean = sum(data) / len(data)
+def param_keys():
+    
+    param_dict = {
+        'MAD': ['baseline_guess'],
+        'CMA': ['preloadValue', 'halfWidth', 'rejectThreshold'],
+        'matched_filter_fft': ['template'],
+        'SF_filter': ['sg_smoothing_window'],
+        'FIR':['baseline', 'windowSize', 'gapSize', 'firThresh', 'fraction', 'holdOffSamples', 'FIRSamples']
+    }
+
+def mean_absolute_deviation(waveform, baseline_guess):
     
     # Calculate the absolute deviations from the mean and store them in a list
-    absolute_deviations = [abs(x - baseline_guess) for x in data]
+    absolute_deviations = [abs(x - baseline_guess) for x in waveform]
     
     # Calculate the MAD by taking the average of the absolute deviations
-    mad = sum(absolute_deviations) / len(data)
+    mad = sum(absolute_deviations) / len(waveform)
     
     return mad
 
@@ -63,12 +71,12 @@ def getCMAFilter( waveform, preloadValue, halfWidth, rejectThreshold ):
 			
 		return cmaFilter
 
-def get_matched_filter_fft(signal, template):
+def get_matched_filter_fft(waveform, template):
 		# Reverse the template
 		template = template[::-1]
 		
 		# Calculate the FFT of the signal and template
-		signal_fft = np.fft.fft(signal)
+		signal_fft = np.fft.fft(waveform)
 		template_fft = np.fft.fft(template)
 		
 		# Multiply the FFTs element-wise
@@ -85,3 +93,87 @@ def get_matched_filter_fft(signal, template):
 def SF_filter(waveform, sg_smoothing_window):
     
     smoothed_wf = savgol_filter(waveform, sg_smoothing_window, 3)
+    
+def getPulsesFromFIR( waveform, baseline, windowSize, gapSize, firThresh, fraction, holdOffSamples, FIRSamples):
+    
+    #Holds the locations of found pulses.
+    pulseTimes = []
+    
+    #Holds the moving average of two windows.
+    leadingWindow = []
+    trailingWindow = []
+    sumLeadingWindow = 0.
+    sumTrailingWindow = 0.
+    
+    #Holds the difference between the moving averages.
+    firVector = []
+    triggerSample = 0
+    
+    #Calculate the FIR vector.
+    for i in range(0, len( waveform )):
+        #For the first window+gapSize samples, load baseline values.
+        if i < windowSize + gapSize:
+            leadingWindow.append( baseline )
+            sumLeadingWindow += baseline
+            trailingWindow.append( baseline )
+            sumTrailingWindow += baseline
+            
+        else:
+            #Push new values and sum.
+            leadingWindow.append( waveform[i] )
+            sumLeadingWindow += waveform[i]
+            trailingWindow.append( waveform[i - windowSize - gapSize] )
+            sumTrailingWindow += waveform[i - windowSize - gapSize]
+            
+        #If vector sizes are > windowSize, remove oldest values.
+        if len( leadingWindow ) > windowSize:
+            sumLeadingWindow -= leadingWindow[0]
+            del leadingWindow[0]
+        if len( trailingWindow ) > windowSize:
+            sumTrailingWindow -= trailingWindow[0]
+            del trailingWindow[0]
+            
+        #Calculate the difference.
+        firVector.append( sumLeadingWindow - sumTrailingWindow )
+        
+    #Now look for stuff above threshold.
+    j = 0
+    while j < len( waveform ):
+        if firVector[j] >= firThresh:
+            maxValue = 0
+            maxSample = 0
+            triggerSample = 0
+            #Search for max value up to FIRSamples.
+            for k in range(j, j + FIRSamples):
+                #Make sure we don't extend  beyond the range of the waveform.
+                if k > len( waveform ):
+                    break
+                if firVector[k] > maxValue:
+                    maxValue = firVector[k]
+                    maxSample = k
+                    
+            #Check if we have a maxValue at position > 0
+            if maxSample > 0:
+                for k in range(maxSample, j + FIRSamples):
+                    if k > len( waveform ):
+                        break
+                    if firVector[k] <= fraction*maxValue:
+                        triggerSample = k
+                        break
+                #Make sure we can interpolate and then do so.
+                if triggerSample > 0:
+                    valueAtTrigger = firVector[triggerSample]
+                    valueBeforeTrigger = firVector[triggerSample-1]
+                    
+                    #Interpolation.
+                    diffMaxDiv2AndMaxAtTrig = maxValue / 2. - valueAtTrigger
+                    diffBeforeAndAtTrig = valueBeforeTrigger - valueAtTrigger
+                    corrector = diffMaxDiv2AndMaxAtTrig / diffBeforeAndAtTrig
+                    
+                    pulseTimes.append( triggerSample - corrector )
+            j += holdOffSamples
+            
+        else:
+            j += 1
+            
+    return pulseTimes
