@@ -8,9 +8,13 @@ decide what combination of signal processing tools to use, decide to set the val
 parameters via domain knowledge (guesses) or through an optimization routine involving the generation
 of toy monte carlo waveforms followed by the minimization of a cost function.
 
+TODO:
+Add a requirements.txt file to pip(3) install requirements either upon installation in your machine or in a virtual environment
+
 USAGE
 example:
 python3 main.py <basic.json>
+
 
 There are several aspects of the code 
 1. parse the binary file and output to a either a ROOT or HF5 file.
@@ -33,3 +37,12 @@ The single electron pulse shape can either be extracted by creating a single ele
 OR
 
 Amassing a collection of pulse integrals and fitting it with Polya functions and noise pedestal (maybe) to elicit a range of integral that is all or mostly populated by single electrons. This may or may not be a practical approach. We'll see!
+
+
+CONFIG FILE
+The following section describes and/or gives instruction on each of the values inside the config file titled basic.json. Feel free to make a new json file but 
+remember to change the command line argument accordingly to point the main.py to the correct config file. Be sure to change the name_tag and/or pay attention to the 
+user responses in the command line to avoid over-writing your output files.
+
+PATH_TO_TRACE: 
+Edit the first line of the config file to encode the path to where you install TRACE in your local machine. This is simply used as a quick path to put outline items in the correct place in your file structure.

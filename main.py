@@ -32,7 +32,8 @@ def main():
  
 	config = read_config_file(config_file)
  
-	path_to_trace = config['PATH_TO_TRACE']
+	# path_to_trace = config['PATH_TO_TRACE'] # I don't like the possiblity of this being wrong/mistyped
+	path_to_trace = os.path.dirname(os.path.abspath(__file__))
  
 	data_file_name = path_to_trace+'/data/'+config['DATA_FILE']
 	waveform_length = config['WAVEFORM_LENGTH']
@@ -81,13 +82,6 @@ def main():
 		# get the toy waveform parameters from the config file
   
 		toy_waveform_params = config['TOY_WAVEFORM_PARAMS']
-  
-		# num_noise_waveforms = toy_waveform_params['NUM_NOISE_WAVEFORMS']
-		# num_signal_waveforms = toy_waveform_params['NUM_SIGNAL_WAVEFORMS']
-		# level_threshold_sigma = toy_waveform_params['LEVEL_THRESHOLD_SIGMA']
-  
-		# pre_onset_samples = toy_waveform_params['PRE_ONSET_SAMPLES']
-		# post_onset_samples = toy_waveform_params['POST_ONSET_SAMPLES']
   
 		make_toy_waveforms(path_to_trace, output_file_name, name_tag,
                      toy_waveform_params)

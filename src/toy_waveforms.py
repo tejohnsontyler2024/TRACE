@@ -3,7 +3,8 @@ import numpy as np
 import statistics
 import os
 import matplotlib.pyplot as plt
-from .filters import mean_absolute_deviation, getCMAFilter, level_threshold_bool, check_clipping_from_sample
+from .filters import mean_absolute_deviation, getCMAFilter, level_threshold_bool, check_clipping_from_sample, SG_filter
+from .fitting import fit_baseline_with_gaussian, fit_waveform
 
 def get_waveform_snippet(wf, onset_sample, pre_onset_samples, post_onset_samples):
     
@@ -90,7 +91,29 @@ def harvest_noise(waveforms, path_to_trace, name_tag, toy_waveform_params):
     
     signal_template = np.mean(signal_waveforms, axis=0)
     
-    signal_template_file_name = path_to_trace + '/toy_waveforms/noise/signal_template_'+name_tag+'.npy'
+    # baseline subtract the signal template
+    # fit the template with a gaussian
+    
+    baseline_fitted = fit_baseline_with_gaussian(signal_template)
+    
+    signal_template = signal_template - baseline_fitted
+    
+    # replace negatives with zeros
+    
+    signal_template[signal_template < 0] = 0
+    
+    
+    # fit the waveform with the Xiao equation
+    
+    # fit_waveform(signal_template)
+    
+    
+    # area normalize the signal template
+    
+    signal_template = signal_template / np.sum(signal_template)
+    
+    
+    signal_template_file_name = path_to_trace + '/toy_waveforms/signals/signal_template_'+name_tag+'.npy'
     
     
     # TODO check if the file already exists and ask the user if they want to overwrite it
@@ -120,17 +143,103 @@ def harvest_noise(waveforms, path_to_trace, name_tag, toy_waveform_params):
         np.save(noise_waveform_file_name, noise_waveforms)
         
         np.save(signal_template_file_name, signal_template)
+        
+    return noise_waveform_file_name, signal_template_file_name
+
+def sample_pdf_n_times(pdf, pdf_x_axis, num_samples, onset_sample, noise_wf_i):
+        
+    for i in range(num_samples):
+        
+        sample = np.random.choice(pdf_x_axis, p=pdf)
+        
+        try:
+        
+            noise_wf_i[sample+onset_sample] -= 1 # subtract because the polarity of the raw waveforms is negative
+            
+        except IndexError:
+            
+            continue
+    
+    return noise_wf_i
+
+def generate_toy_waveform(waveform_length, onset_sample, integral, signal_template, noise_wf_i):
+    
+    # make a blank template that is the length of the waveform
+        
+    signal_waveform_x_axis = np.arange(0, len(signal_template))
+    
+    
+    # randomly sample the signal template
+    
+    integral_int, onset_sample_int = int(integral), int(onset_sample)
+    
+    signal_waveform = sample_pdf_n_times(signal_template, signal_waveform_x_axis, 
+                                         integral_int, onset_sample_int, 
+                                         noise_wf_i)
+    
+    
+    return signal_waveform
+
+def generate_integral_onset_values(toy_waveform_params):
+    
+    true_integral_min = toy_waveform_params['TRUE_INTEGRAL_MIN']
+    true_integral_max = toy_waveform_params['TRUE_INTEGRAL_MAX']
+    
+    true_onset_min = toy_waveform_params['TRUE_ONSET_MIN']
+    true_onset_max = toy_waveform_params['TRUE_ONSET_MAX']
+    
+    num_toy_waveforms = toy_waveform_params['NUM_TOY_WAVEFORMS']
+    
+    
+    integrals = np.random.uniform(true_integral_min, true_integral_max, num_toy_waveforms)
+    
+    onsets = np.random.uniform(true_onset_min, true_onset_max, num_toy_waveforms)
+    
+    
+    # pair them into tuples
+    
+    integral_onset_pairs = [(integral, onset) for integral, onset in zip(integrals, onsets)]
+    
+    return integral_onset_pairs
+    
 
 def make_toy_waveforms(path_to_trace, waveform_file_name, name_tag, toy_waveform_params):
     
     # open the output_file_name.npy file
+    # Might need to do this function in chunks/buffers in the future depending on raw waveform file size (when the file is too large to fit in memory)
     waveforms = np.load(waveform_file_name)
     
     
     # harvest the noise waveforms and make signal template
-    harvest_noise(waveforms,  path_to_trace, name_tag, toy_waveform_params)
+    noise_waveform_file_name, signal_template_file_name = harvest_noise(waveforms,  path_to_trace, name_tag, toy_waveform_params)
         
     
     # make the signal waveforms
+    
+    waveform_length = len(waveforms[0])
         
+    signal_template = np.load(signal_template_file_name)
+    
+    
+    noise_repo = np.load(noise_waveform_file_name)
+    
+    integral_onset_pairs = generate_integral_onset_values(toy_waveform_params)
+    
+    
+    for integral_onset_pair in integral_onset_pairs:
         
+        integral, onset = integral_onset_pair
+        
+        random_index = np.random.randint(0, len(noise_repo))
+        
+        noise_wf_i = noise_repo[random_index]
+        
+        toy_waveform_i = generate_toy_waveform(waveform_length, onset, integral, signal_template, noise_wf_i)
+        
+        plt.plot(toy_waveform_i)
+        
+        plt.title('integral: '+str(integral)+' onset: '+str(onset))
+        
+        plt.show()
+        
+        break

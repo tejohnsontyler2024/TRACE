@@ -90,9 +90,11 @@ def get_matched_filter_fft(waveform, template):
 		
 		return convolution_result
 
-def SF_filter(waveform, sg_smoothing_window):
+def SG_filter(waveform, sg_smoothing_window):
     
     smoothed_wf = savgol_filter(waveform, sg_smoothing_window, 3)
+    
+    return smoothed_wf
     
 def getPulsesFromFIR( waveform, baseline, windowSize, gapSize, firThresh, fraction, holdOffSamples, FIRSamples):
     

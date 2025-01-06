@@ -14,6 +14,11 @@
         "NUM_SIGNAL_WAVEFORMS": 10000,
         "LEVEL_THRESHOLD_SIGMA": 4.0,
         "PRE_ONSET_SAMPLES": 20,
-        "POST_ONSET_SAMPLES": 60
+        "POST_ONSET_SAMPLES": 20,
+        "NUM_TOY_WAVEFORMS": 1000,
+        "TRUE_INTEGRAL_MIN": 1000,
+        "TRUE_INTEGRAL_MAX": 10000,
+        "TRUE_ONSET_MIN": 10,
+        "TRUE_ONSET_MAX": 100
     }
 }
